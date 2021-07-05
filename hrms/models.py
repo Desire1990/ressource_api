@@ -80,12 +80,11 @@ EDUCATIONAL_LEVEL = (
 
 class Profile(models.Model):
 	user = models.OneToOneField(User, on_delete=models.CASCADE)
-	avatar  = models.CharField(max_length = 200, null=True, blank=True)
+	avatar  = models.ImageField(null=True, blank=True)
 	is_valid = models.BooleanField(default = False)
-	account = models.CharField(max_length=25, default='xx xxxx xx-xx')
 
 	def __str__(self):
-		return self.user.username
+		return f'{self.user.first_name} {self.user.last_name}' 
 
 
 class Department(models.Model):
@@ -140,13 +139,12 @@ class Employee(models.Model):
 		)
 	profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
 	department = models.ForeignKey(Department,on_delete=models.CASCADE, null=True)
+	role =  models.ForeignKey(Role,verbose_name =_('Role'),on_delete=models.CASCADE,null=True,default=None)
 	emp_id = models.CharField(max_length=64, default='emp'+str(random.randrange(100,999,1)))
 	mobile = models.CharField(max_length=15)
 	title = models.CharField(_('Title'),max_length=64,default=MR,choices=TITLE,blank=False,null=True)
 	status = models.CharField(_('Marital Status'),max_length=10,default=SINGLE,choices=STATUS,blank=False,null=True)
-	thumb = models.ImageField(blank=True,null=True)
-	role =  models.ForeignKey(Role,verbose_name =_('Role'),on_delete=models.CASCADE,null=True,default=None)
-	address = models.TextField(max_length=100, default='')
+	address = models.CharField(max_length=100, default='')
 	gender = models.CharField(choices=GENDER, max_length=10)
 	joined = models.DateTimeField(default=timezone.now, editable=False)
 	birthday = models.DateField(_('Birthday'),blank=False,null=False)
@@ -155,7 +153,7 @@ class Employee(models.Model):
 
 
 	def __str__(self):
-		return self.first_name
+		return f'{self.profile.user.first_name} {self.profile.user.first_name}'
 		
   
    
@@ -163,8 +161,8 @@ class Employee(models.Model):
 class Attendance (models.Model):
 	employee = models.ForeignKey(Employee, on_delete=models.CASCADE, null=True)
 	date = models.DateField(auto_now_add=True)
-	first_in = models.TimeField()
-	last_out = models.TimeField(null=True)
+	first_in = models.TimeField(auto_now_add=True, blank=True)
+	last_out = models.TimeField(auto_now_add=True, blank=True)
 	status = models.CharField(choices=STATUS, max_length=15 )
 
 	def save(self,*args, **kwargs):
@@ -177,8 +175,8 @@ class Attendance (models.Model):
 class Leave (models.Model):
 	STATUS = (('approved','APPROVED'),('unapproved','UNAPPROVED'),('decline','DECLINED'))
 	employee = models.OneToOneField(Employee, on_delete=models.CASCADE)
-	start = models.CharField(blank=False, max_length=15)
-	end = models.CharField(blank=False, max_length=15)
+	start = models.DateTimeField(default=timezone.now)
+	end = models.DateTimeField(default=timezone.now)
 	status = models.CharField(choices=STATUS,  default='Not Approved',max_length=15)
 
 	def __str__(self):
@@ -194,13 +192,6 @@ class Recruitment(models.Model):
 	def __str__(self):
 		return self.first_name +' - '+self.position
 
-class Bank(models.Model):
-	name = models.CharField(max_length=64)
-	address = models.CharField(max_length=64)
-
-	def __str__(self):
-		return f'{self.name}'
-		
 
 class Bank(models.Model):
 	# access table: employee.bank_set.
