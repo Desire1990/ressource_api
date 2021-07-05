@@ -43,7 +43,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer): 
 	def to_representation(self, obj):
 		representation = super().to_representation(obj)
-		representation['user'] = str(obj.user.email)
+		representation['user'] = str(obj.user.username)
 		return representation
 
 	def get_id(self, obj):
@@ -52,7 +52,6 @@ class ProfileSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Profile
 		fields = '__all__'
-		read_only_fields = ['subscription_end_date']
 
 class UserSerializer(serializers.ModelSerializer):
 	password = serializers.CharField(write_only=True)
@@ -88,12 +87,10 @@ class RecruitmentSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Recruitment
 		fields = "__all__"
-		read_only_fields = "owner",
 class RoleSerializer(serializers.ModelSerializer): 
 	class Meta:
 		model = Role
 		fields = "__all__"
-		read_only_fields = "owner",
 
 class BankSerializer(serializers.ModelSerializer): 
 	class Meta:
