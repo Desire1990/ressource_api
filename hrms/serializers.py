@@ -24,9 +24,9 @@ class RegisterSerializer(serializers.ModelSerializer):
 		model = User
 		fields = ('username','email', 'password', 'first_name', 'last_name')
 		extra_kwargs = {
-			'first_name': {'required': True},
-			'last_name': {'required': True}
-		}
+		    'first_name': {'required': True},
+		    'last_name': {'required': True}
+    	}
 
 	def create(self, validated_data):
 		user = User.objects.create(
@@ -39,11 +39,10 @@ class RegisterSerializer(serializers.ModelSerializer):
 		user.save()
 
 		return user
-
 class ProfileSerializer(serializers.ModelSerializer): 
 	def to_representation(self, obj):
 		representation = super().to_representation(obj)
-		representation['user'] = str(obj.user.username)
+		representation['user'] = str(obj.user.email)
 		return representation
 
 	def get_id(self, obj):
@@ -52,6 +51,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Profile
 		fields = '__all__'
+		read_only_fields = ['subscription_end_date']
 
 class UserSerializer(serializers.ModelSerializer):
 	password = serializers.CharField(write_only=True)
@@ -63,22 +63,44 @@ class UserSerializer(serializers.ModelSerializer):
 		exclude = "last_login","is_staff","date_joined","user_permissions"
 
 class EmployeeSerializer(serializers.ModelSerializer): 
+
+	def to_representation(self, obj):
+		representation = super().to_representation(obj)
+		representation['profile'] = ProfileSerializer(obj.profile, many=False).data
+		return representation
+
+
 	class Meta:
 		model = Employee
 		fields = '__all__'
 
 		
 class DepartmentSerializer(serializers.ModelSerializer): 
+	def to_representation(self, obj):
+		rep = super().to_representation(obj)
+		rep['profile'] = ProfileSerializer(obj.profile, many=False).data
+		rep['eepartment'] = ProfileSerializer(obj.eepartment, many=False).data
+		rep['role'] = RoleSerializer(obj.role, many=False).data
+		return rep
+
 	class Meta:
 		model = Department
 		fields = '__all__'
 
 class AttendanceSerializer(serializers.ModelSerializer): 
+	def to_representation(self, obj):
+		rep = super().to_representation(obj)
+		rep['employeeSerializer'] = EmployeeSerializerSerializer(obj.employeeSerializer, many=False).data
+		return rep
 	class Meta:
 		model = Attendance
 		fields = '__all__'
 
 class LeaveSerializer(serializers.ModelSerializer): 
+	def to_representation(self, obj):
+		rep = super().to_representation(obj)
+		rep['employeeSerializer'] = EmployeeSerializerSerializer(obj.employeeSerializer, many=False).data
+		return rep
 	class Meta:
 		model = Leave
 		fields = '__all__'
@@ -87,6 +109,7 @@ class RecruitmentSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Recruitment
 		fields = "__all__"
+
 class RoleSerializer(serializers.ModelSerializer): 
 	class Meta:
 		model = Role
@@ -98,6 +121,11 @@ class BankSerializer(serializers.ModelSerializer):
 		fields = '__all__'
 		
 class PaymentSerializer(serializers.ModelSerializer): 
+	def to_representation(self, obj):
+		rep = super().to_representation(obj)
+		rep['employeeSerializer'] = EmployeeSerializerSerializer(obj.employeeSerializer, many=False).data
+		return rep
+	
 	class Meta:
 		model = Payment
 		fields = '__all__'
