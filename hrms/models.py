@@ -148,6 +148,8 @@ class Employee(models.Model):
 	role =  models.ForeignKey(Role,verbose_name =_('Role'),on_delete=models.CASCADE,null=True,default=None)
 	address = models.TextField(max_length=100, default='')
 	gender = models.CharField(choices=GENDER, max_length=10)
+	banque = models.ForeignKey("Bank", on_delete=models.CASCADE)
+	compte = models.CharField(max_length=255)
 	joined = models.DateTimeField(default=timezone.now, editable=False)
 	birthday = models.DateField(_('Birthday'),blank=False,null=False)
 	education = models.CharField(_('Education'),help_text='highest educational standard ie. your last level of schooling',max_length=20,default=SENIORHIGH,choices=EDUCATIONAL_LEVEL,blank=False,null=True)
@@ -155,7 +157,7 @@ class Employee(models.Model):
 
 
 	def __str__(self):
-		return self.first_name
+		return self.profile.user.username
 		
   
    
@@ -202,26 +204,26 @@ class Bank(models.Model):
 		return f'{self.name}'
 		
 
-class Bank(models.Model):
-	# access table: employee.bank_set.
-	employee = models.ForeignKey('Employee',help_text='select employee(s) to add bank account',on_delete=models.CASCADE,null=True,blank=False)
-	name = models.CharField(_('Name of Bank'),max_length=125,blank=False,null=True,help_text='')
-	account = models.CharField(_('Account Number'),help_text='employee account number',max_length=30,blank=False,null=True)
-	branch = models.CharField(_('Branch'),help_text='which branch was the account issue',max_length=125,blank=True,null=True)
-	salary = models.DecimalField(_('Starting Salary'),help_text='This is the initial salary of employee',max_digits=16, decimal_places=2,null=True,blank=False)
+# class Bank(models.Model):
+# 	# access table: employee.bank_set.
+# 	employee = models.ForeignKey('Employee',help_text='select employee(s) to add bank account',on_delete=models.CASCADE,null=True,blank=False)
+# 	name = models.CharField(_('Name of Bank'),max_length=125,blank=False,null=True,help_text='')
+# 	account = models.CharField(_('Account Number'),help_text='employee account number',max_length=30,blank=False,null=True)
+# 	branch = models.CharField(_('Branch'),help_text='which branch was the account issue',max_length=125,blank=True,null=True)
+# 	salary = models.DecimalField(_('Starting Salary'),help_text='This is the initial salary of employee',max_digits=16, decimal_places=2,null=True,blank=False)
 
-	created = models.DateTimeField(verbose_name=_('Created'),auto_now_add=True,null=True)
-	updated = models.DateTimeField(verbose_name=_('Updated'),auto_now=True,null=True)
-
-
-	class Meta:
-		verbose_name = _('Bank')
-		verbose_name_plural = _('Banks')
-		ordering = ['-name','-account']
+# 	created = models.DateTimeField(verbose_name=_('Created'),auto_now_add=True,null=True)
+# 	updated = models.DateTimeField(verbose_name=_('Updated'),auto_now=True,null=True)
 
 
-	def __str__(self):
-		return ('{0}'.format(self.name))
+# 	class Meta:
+# 		verbose_name = _('Bank')
+# 		verbose_name_plural = _('Banks')
+# 		ordering = ['-name','-account']
+
+
+# 	def __str__(self):
+# 		return ('{0}'.format(self.name))
 
 
 
