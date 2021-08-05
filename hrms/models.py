@@ -1,6 +1,7 @@
 from django.db import models
 import random
 from django.utils import timezone
+import datetime
 import time
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
@@ -78,13 +79,6 @@ EDUCATIONAL_LEVEL = (
 	(OTHER,'Other'),
 	)
 
-class Profile(models.Model):
-	user = models.OneToOneField(User, on_delete=models.CASCADE)
-	avatar  = models.ImageField(null=True, blank=True)
-	is_valid = models.BooleanField(default = False)
-
-	def __str__(self):
-		return f'{self.user.first_name} {self.user.last_name}' 
 
 
 class Department(models.Model):
@@ -111,7 +105,7 @@ class Role(models.Model):
 	'''
 		Role Table eg. Staff,Manager,H.R ...
 	'''
-	name = models.CharField(max_length=125)
+	name = models.CharField(max_length=125, unique = True)
 	description = models.CharField(max_length=125,null=True,blank=True)
 
 	created = models.DateTimeField(verbose_name=_('Created'),auto_now_add=True)
@@ -137,7 +131,11 @@ class Employee(models.Model):
 		(WIDOW,'Widow'),
 		(WIDOWER,'Widower'),
 		)
-	profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+
+	user = models.OneToOneField(User, on_delete=models.CASCADE)
+	avatar  = models.ImageField(null=True, blank=True)
+	is_valid = models.BooleanField(default = False)
+
 	department = models.ForeignKey(Department,on_delete=models.CASCADE, null=True)
 	role =  models.ForeignKey(Role,verbose_name =_('Role'),on_delete=models.CASCADE,null=True,default=None)
 	emp_id = models.CharField(max_length=64, default='emp'+str(random.randrange(100,999,1)))
@@ -150,37 +148,51 @@ class Employee(models.Model):
 	birthday = models.DateField(_('Birthday'),blank=False,null=False)
 	education = models.CharField(_('Education'),help_text='highest educational standard ie. your last level of schooling',max_length=20,default=SENIORHIGH,choices=EDUCATIONAL_LEVEL,blank=False,null=True)
 	employeetype = models.CharField(_('Employee Type'),max_length=15,default=FULL_TIME,choices=EMPLOYEETYPE,blank=False,null=True)	
-
+	salary = models.FloatField()
 
 	def __str__(self):
-		return f'{self.profile.user.first_name} {self.profile.user.first_name}'
-		
+		return f'{self.user.username}' 
+
   
    
 
 class Attendance (models.Model):
 	employee = models.ForeignKey(Employee, on_delete=models.CASCADE, null=True)
 	date = models.DateField(auto_now_add=True)
-	first_in = models.TimeField(auto_now_add=True, blank=True)
-	last_out = models.TimeField(auto_now_add=True, blank=True)
-	status = models.CharField(choices=STATUS, max_length=15 )
+	start_time = models.TimeField(auto_now_add=True, blank=True)
+	end_time = models.TimeField(auto_now_add=True, blank=True)
+	# status = models.CharField(choices=STATUS, max_length=15 )
+	Approved_by = models.CharField(max_length = 50, help_text = 'Approved by ...')
+
 
 	def save(self,*args, **kwargs):
-		self.first_in = timezone.localtime()
+		self.start_time = timezone.localtime()
 		super(Attendance,self).save(*args, **kwargs)
 	
 	def __str__(self):
 		return 'Attendance -> '+str(self.date) + ' -> ' + str(self.employee)
 
+
+	def heure_travail(self):
+		start_time = datetime.datetime.now().time().strftime('%H:%M:%S')
+		time.sleep(5)
+		end_time = datetime.datetime.now().time().strftime('%H:%M:%S')
+		total_time=(datetime.datetime.strptime(end_time,'%H:%M:%S') - datetime.datetime.strptime(start_time,'%H:%M:%S'))
+		print total_time
+
+
+
+
 class Leave (models.Model):
 	STATUS = (('approved','APPROVED'),('unapproved','UNAPPROVED'),('decline','DECLINED'))
 	employee = models.OneToOneField(Employee, on_delete=models.CASCADE)
 	start = models.DateTimeField(default=timezone.now)
-	end = models.DateTimeField(default=timezone.now)
-	status = models.CharField(choices=STATUS,  default='Not Approved',max_length=15)
+	end = models.DateTimeField()
+	# status = models.CharField(choices=STATUS,  default='Not Approved',max_length=15)
+	Approved_by = models.CharField(max_length = 50, help_text = 'Approved by ...')
 
 	def __str__(self):
-		return self.employee + ' ' + self.start
+		return self.employee.user.username
 
 class Recruitment(models.Model):
 	first_name = models.CharField(max_length=25)
