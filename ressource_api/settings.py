@@ -50,23 +50,19 @@ INSTALLED_APPS = [
 	'django.contrib.sites',
 	'allauth.account',
 	'allauth.socialaccount',
-	'dj_rest_auth',
-	'dj_rest_auth.registration',
-	'rest_framework.authtoken',
-
 
 ]
 
 MIDDLEWARE = [
-	'django.middleware.security.SecurityMiddleware',
-	'django.contrib.sessions.middleware.SessionMiddleware',
-	'django.middleware.csrf.CsrfViewMiddleware',
-	'django.middleware.common.CommonMiddleware',
-	'whitenoise.middleware.WhiteNoiseMiddleware',
-	'corsheaders.middleware.CorsMiddleware',
-	'django.contrib.auth.middleware.AuthenticationMiddleware',
-	'django.contrib.messages.middleware.MessageMiddleware',
-	'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 
@@ -122,8 +118,10 @@ AUTH_PASSWORD_VALIDATORS = [
 	},
 ]
 
+
 REST_FRAMEWORK = {
 	'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
 		'rest_framework_simplejwt.authentication.JWTAuthentication',
 		'rest_framework.authentication.TokenAuthentication',
 	],

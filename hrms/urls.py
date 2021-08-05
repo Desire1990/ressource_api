@@ -9,21 +9,23 @@ from dj_rest_auth.views import LoginView, LogoutView
 
 
 router = routers.DefaultRouter()
-router.register("user",UserViewset)
+router.register("user",UserViewSet)
 router.register("employee",EmployeeViewset)
 router.register("department", DepartmentViewset)
 router.register("attendance", AttendanceViewset)
 router.register("leave", LeaveViewset)
 router.register("bank", BankViewset)
 router.register("payment", PaymentViewset)
-router.register("profile", ProfileViewset)
 router.register("role", RoleViewset)
 
-app_name = 'hrms'
+app_name = 'hrms'     
+
 urlpatterns = [
-     path("", include(router.urls)),
-     path('login/', TokenPairView.as_view()),
-     path('refresh/', TokenRefreshView.as_view()),
-     path('register/', RegisterView.as_view(), name='auth_register_v2'),
+    path('', include(router.urls)),
+    path('api-auth/', include('rest_framework.urls')),
+    path('login/', TokenPairView.as_view()),
+    path('refresh/', TokenRefreshView.as_view()),
+    path('register/', RegisterView.as_view(), name='auth_register'),
 ]
+
  
