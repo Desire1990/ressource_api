@@ -7,7 +7,6 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from dj_rest_auth.registration.views import RegisterView, VerifyEmailView, ConfirmEmailView
 from dj_rest_auth.views import LoginView, LogoutView
 
-
 router = routers.DefaultRouter()
 router.register("user",UserViewSet)
 router.register("employee",EmployeeViewset)

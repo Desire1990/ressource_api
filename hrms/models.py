@@ -144,6 +144,8 @@ class Employee(models.Model):
 	status = models.CharField(_('Marital Status'),max_length=10,default=SINGLE,choices=STATUS,blank=False,null=True)
 	address = models.CharField(max_length=100, default='')
 	gender = models.CharField(choices=GENDER, max_length=10)
+	banque = models.ForeignKey("Bank", on_delete=models.CASCADE)
+	compte = models.CharField(max_length=255)
 	joined = models.DateTimeField(default=timezone.now, editable=False)
 	birthday = models.DateField(_('Birthday'),blank=False,null=False)
 	education = models.CharField(_('Education'),help_text='highest educational standard ie. your last level of schooling',max_length=20,default=SENIORHIGH,choices=EDUCATIONAL_LEVEL,blank=False,null=True)
@@ -159,40 +161,19 @@ class Employee(models.Model):
 class Attendance (models.Model):
 	employee = models.ForeignKey(Employee, on_delete=models.CASCADE, null=True)
 	date = models.DateField(auto_now_add=True)
-	start_time = models.TimeField(auto_now_add=True, blank=True)
-	end_time = models.TimeField(auto_now_add=True, blank=True)
-	# status = models.CharField(choices=STATUS, max_length=15 )
-	Approved_by = models.CharField(max_length = 50, help_text = 'Approved by ...')
-
 
 	def save(self,*args, **kwargs):
-		self.start_time = timezone.localtime()
 		super(Attendance,self).save(*args, **kwargs)
 	
 	def __str__(self):
 		return 'Attendance -> '+str(self.date) + ' -> ' + str(self.employee)
 
-
-	def heure_travail(self):
-		start_time = datetime.datetime.now().time().strftime('%H:%M:%S')
-		time.sleep(5)
-		end_time = datetime.datetime.now().time().strftime('%H:%M:%S')
-		total_time=(datetime.datetime.strptime(end_time,'%H:%M:%S') - datetime.datetime.strptime(start_time,'%H:%M:%S'))
-		print total_time
-
-
-
-
 class Leave (models.Model):
 	STATUS = (('approved','APPROVED'),('unapproved','UNAPPROVED'),('decline','DECLINED'))
 	employee = models.OneToOneField(Employee, on_delete=models.CASCADE)
 	start = models.DateTimeField(default=timezone.now)
-	end = models.DateTimeField()
-	# status = models.CharField(choices=STATUS,  default='Not Approved',max_length=15)
-	Approved_by = models.CharField(max_length = 50, help_text = 'Approved by ...')
 
 	def __str__(self):
-		return self.employee.user.username
 
 class Recruitment(models.Model):
 	first_name = models.CharField(max_length=25)
@@ -217,14 +198,18 @@ class Bank(models.Model):
 	# updated = models.DateTimeField(verbose_name=_('Updated'),auto_now=True,null=True)
 
 
+# 	class Meta:
+# 		verbose_name = _('Bank')
+# 		verbose_name_plural = _('Banks')
+# 		ordering = ['-name','-account']
 	class Meta:
 		verbose_name = _('Bank')
 		verbose_name_plural = _('Banks')
 		ordering = ['-name','-account']
 
 
-	def __str__(self):
-		return ('{0}'.format(self.name))
+# 	def __str__(self):
+# 		return ('{0}'.format(self.name))
 
 
 
