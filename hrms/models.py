@@ -186,6 +186,18 @@ class Recruitment(models.Model):
 		return self.first_name +' - '+self.position
 
 
+<<<<<<< HEAD
+# class Bank(models.Model):
+# 	# access table: employee.bank_set.
+# 	employee = models.ForeignKey('Employee',help_text='select employee(s) to add bank account',on_delete=models.CASCADE,null=True,blank=False)
+# 	name = models.CharField(_('Name of Bank'),max_length=125,blank=False,null=True,help_text='')
+# 	account = models.CharField(_('Account Number'),help_text='employee account number',max_length=30,blank=False,null=True)
+# 	branch = models.CharField(_('Branch'),help_text='which branch was the account issue',max_length=125,blank=True,null=True)
+# 	salary = models.DecimalField(_('Starting Salary'),help_text='This is the initial salary of employee',max_digits=16, decimal_places=2,null=True,blank=False)
+
+# 	created = models.DateTimeField(verbose_name=_('Created'),auto_now_add=True,null=True)
+# 	updated = models.DateTimeField(verbose_name=_('Updated'),auto_now=True,null=True)
+=======
 class Bank(models.Model):
 	# access table: employee.bank_set.
 	# employee = models.ForeignKey('Employee',help_text='select employee(s) to add bank account',on_delete=models.CASCADE,null=True,blank=False)
@@ -196,6 +208,7 @@ class Bank(models.Model):
 
 	# created = models.DateTimeField(verbose_name=_('Created'),auto_now_add=True,null=True)
 	# updated = models.DateTimeField(verbose_name=_('Updated'),auto_now=True,null=True)
+>>>>>>> 7192dc13472bdedc84087444349299e55f59fb7f
 
 
 # 	class Meta:
