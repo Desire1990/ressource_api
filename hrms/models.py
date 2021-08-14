@@ -5,6 +5,7 @@ import datetime
 import time
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
+from .manager import LeaveManager
 
 STATUS = (
 	('PRESENT', 'PRESENT'),
@@ -78,6 +79,22 @@ EDUCATIONAL_LEVEL = (
 	(OLEVEL,'OLevel'),
 	(OTHER,'Other'),
 	)
+SICK = 'sick'
+CASUAL = 'casual'
+EMERGENCY = 'emergency'
+STUDY = 'study'
+
+LEAVE_TYPE = (
+	(SICK,'Sick Leave'),
+	(CASUAL,'Casual Leave'),
+	(EMERGENCY,'Emergency Leave'),
+	(STUDY,'Study Leave'),
+)
+
+DAYS = 30
+
+
+
 
 
 
@@ -85,7 +102,7 @@ class Department(models.Model):
 	'''
 	 Department Employee belongs to. eg. Transport, Engineering.
 	'''
-	name = models.CharField(max_length=125)
+	name = models.CharField(max_length=125, unique=True)
 	description = models.CharField(max_length=125,null=True,blank=True)
 	created = models.DateTimeField(verbose_name=_('Created'),auto_now_add=True)
 	updated = models.DateTimeField(verbose_name=_('Updated'),auto_now=True)
@@ -138,14 +155,11 @@ class Employee(models.Model):
 
 	department = models.ForeignKey(Department,on_delete=models.CASCADE, null=True)
 	role =  models.ForeignKey(Role,verbose_name =_('Role'),on_delete=models.CASCADE,null=True,default=None)
-	emp_id = models.CharField(max_length=64, default='emp'+str(random.randrange(100,999,1)))
 	mobile = models.CharField(max_length=15)
 	title = models.CharField(_('Title'),max_length=64,default=MR,choices=TITLE,blank=False,null=True)
 	status = models.CharField(_('Marital Status'),max_length=10,default=SINGLE,choices=STATUS,blank=False,null=True)
 	address = models.CharField(max_length=100, default='')
 	gender = models.CharField(choices=GENDER, max_length=10)
-	banque = models.ForeignKey("Bank", on_delete=models.CASCADE)
-	compte = models.CharField(max_length=255)
 	joined = models.DateTimeField(default=timezone.now, editable=False)
 	birthday = models.DateField(_('Birthday'),blank=False,null=False)
 	education = models.CharField(_('Education'),help_text='highest educational standard ie. your last level of schooling',max_length=20,default=SENIORHIGH,choices=EDUCATIONAL_LEVEL,blank=False,null=True)
@@ -153,27 +167,125 @@ class Employee(models.Model):
 	salary = models.FloatField()
 
 	def __str__(self):
-		return f'{self.user.username}' 
+		return f'{self.user}' 
+
+	@property
+	def get_full_name(self):
+		fullname = ''
+		firstname = self.firstname
+		lastname = self.lastname
+		othername = self.othername
+
+		if (firstname and lastname) is None:
+			fullname = firstname +' '+ lastname
+			return fullname
+		elif othername:
+			fullname = firstname + ' '+ lastname +' '+othername
+			return fullname
+		return
 
   
    
 
 class Attendance (models.Model):
 	employee = models.ForeignKey(Employee, on_delete=models.CASCADE, null=True)
-	date = models.DateField(auto_now_add=True)
+	start_time = models.DateTimeField(blank=True, null=True)
+	end_time = models.DateTimeField(blank=True, null=True)
+	Approved_by = models.CharField(max_length = 50, help_text = 'Approved by ...')
+	hours = models.FloatField(blank=True, null=True, editable=False)
 
-	def save(self,*args, **kwargs):
-		super(Attendance,self).save(*args, **kwargs)
+	def save(self, *args, **kwargs):
+		if self.start_time and self.end_time:
+			self.hours = (self.end_time - self.start_time).seconds // 3600
+		super(Attendance, self).save(*args, **kwargs)
+
+
 	
 	def __str__(self):
-		return 'Attendance -> '+str(self.date) + ' -> ' + str(self.employee)
+		return 'Attendance -> '+str(self.hours) +'h'' -> ' + str(self.employee)
 
-class Leave (models.Model):
-	STATUS = (('approved','APPROVED'),('unapproved','UNAPPROVED'),('decline','DECLINED'))
-	employee = models.OneToOneField(Employee, on_delete=models.CASCADE)
-	start = models.DateTimeField(default=timezone.now)
+	def calcul_heureMensuelle(self):
+		pass
 
-	def __str__(self):
+	# def save(self, *args, **kwargs):
+	# 	start_time = datetime.datetime.now().time().strftime('%H:%M:%S')
+	# 	end_time = datetime.datetime.now().time().strftime('%H:%M:%S')
+	# 	total_time=(datetime.datetime.strptime(end_time,'%H:%M:%S') - datetime.datetime.strptime(start_time,'%H:%M:%S'))
+	# 	hours = total_time
+	# 	super(Attendance, self).save(*args, **kwargs)
+
+
+class Leave(models.Model):
+	user = models.ForeignKey(User,on_delete=models.CASCADE,default=1)
+	startdate = models.DateField(verbose_name=_('Start Date'),help_text='leave start date is on ..',null=True,blank=False)
+	enddate = models.DateField(verbose_name=_('End Date'),help_text='coming back on ...',null=True,blank=False)
+	leavetype = models.CharField(choices=LEAVE_TYPE,max_length=25,default=SICK,null=True,blank=False)
+	reason = models.CharField(verbose_name=_('Reason for Leave'),max_length=255,help_text='add additional information for leave',null=True,blank=True)
+	defaultdays = models.PositiveIntegerField(verbose_name=_('Leave days per year counter'),default=DAYS,null=True,blank=True)
+	status = models.CharField(max_length=12,default='pending') #pending,approved,rejected,cancelled
+	is_approved = models.BooleanField(default=False) #hide
+	updated = models.DateTimeField(auto_now=True, auto_now_add=False)
+	created = models.DateTimeField(auto_now=False, auto_now_add=True)
+	Approved_by = models.CharField(max_length=50, null=True, blank=False)
+	# objects = LeaveManager()
+
+
+
+	@property
+	def pretty_leave(self):
+		leave = self.leavetype
+		user = self.user
+		employee = user.employee_set.first().user.username
+		return ('{0} - {1}'.format(employee,leave))
+
+
+
+	@property
+	def leave_days(self):
+		days_count = ''
+		startdate = self.startdate
+		enddate = self.enddate
+		if startdate > enddate:
+			return 0
+		dates = (enddate - startdate)
+		return dates.days
+		
+
+
+
+	@property
+	def leave_approved(self):
+		return self.is_approved == True
+
+
+
+
+	@property
+	def approve_leave(self):
+		if not self.is_approved:
+			self.is_approved = True
+			self.status = 'approved'
+			self.save()
+
+
+	@property
+	def unapprove_leave(self):
+		if self.is_approved:
+			self.is_approved = False
+			self.status = 'pending'
+			self.save()
+
+	@property
+	def leaves_cancel(self):
+		if self.is_approved or not self.is_approved:
+			self.is_approved = False
+			self.status = 'cancelled'
+			self.save()
+
+
+
+
+
 
 class Recruitment(models.Model):
 	first_name = models.CharField(max_length=25)
@@ -186,53 +298,55 @@ class Recruitment(models.Model):
 		return self.first_name +' - '+self.position
 
 
-<<<<<<< HEAD
-# class Bank(models.Model):
-# 	# access table: employee.bank_set.
-# 	employee = models.ForeignKey('Employee',help_text='select employee(s) to add bank account',on_delete=models.CASCADE,null=True,blank=False)
-# 	name = models.CharField(_('Name of Bank'),max_length=125,blank=False,null=True,help_text='')
-# 	account = models.CharField(_('Account Number'),help_text='employee account number',max_length=30,blank=False,null=True)
-# 	branch = models.CharField(_('Branch'),help_text='which branch was the account issue',max_length=125,blank=True,null=True)
-# 	salary = models.DecimalField(_('Starting Salary'),help_text='This is the initial salary of employee',max_digits=16, decimal_places=2,null=True,blank=False)
-
-# 	created = models.DateTimeField(verbose_name=_('Created'),auto_now_add=True,null=True)
-# 	updated = models.DateTimeField(verbose_name=_('Updated'),auto_now=True,null=True)
-=======
 class Bank(models.Model):
-	# access table: employee.bank_set.
-	# employee = models.ForeignKey('Employee',help_text='select employee(s) to add bank account',on_delete=models.CASCADE,null=True,blank=False)
 	name = models.CharField(_('Name of Bank'),max_length=125,blank=False,null=True,help_text='')
 	account = models.CharField(_('Account Number'),help_text='employee account number',max_length=30,blank=False,null=True)
-	# branch = models.CharField(_('Branch'),help_text='which branch was the account issue',max_length=125,blank=True,null=True)
-	# salary = models.DecimalField(_('Starting Salary'),help_text='This is the initial salary of employee',max_digits=16, decimal_places=2,null=True,blank=False)
+	
 
-	# created = models.DateTimeField(verbose_name=_('Created'),auto_now_add=True,null=True)
-	# updated = models.DateTimeField(verbose_name=_('Updated'),auto_now=True,null=True)
->>>>>>> 7192dc13472bdedc84087444349299e55f59fb7f
-
-
-# 	class Meta:
-# 		verbose_name = _('Bank')
-# 		verbose_name_plural = _('Banks')
-# 		ordering = ['-name','-account']
 	class Meta:
 		verbose_name = _('Bank')
 		verbose_name_plural = _('Banks')
 		ordering = ['-name','-account']
 
 
-# 	def __str__(self):
-# 		return ('{0}'.format(self.name))
+	def __str__(self):
+		return ('{0}'.format(self.name))
 
 
 
 class Payment(models.Model):
 	employee = models.ForeignKey(Employee, on_delete = models.CASCADE, related_name = 'employee_payment')
+	attendance = models.ForeignKey(Attendance, on_delete= models.CASCADE)
 	bank = models.ForeignKey(Bank, on_delete = models.CASCADE, related_name = 'employee_bank')
 	date = models.DateTimeField(default=timezone.now, editable=False)
+	monthSalary = models.FloatField(editable=False)
 
+	
 	def __str__(self):
-		return f'{self.date}'
+		return f'{self.date} {self.employee.salary}'
+
+	def heures(self):
+		pass #comment  trouver le nombre d'heures pendant un mois noteees nbh tenu pour calculer les salaires
+
+
+	def heureMensuelle(nbh):
+		if nbh<160:
+			result = nbh
+		elif  nbh<200:
+			result = 160 + (nbh-160)*1.25
+		else:
+			result = 160+(40*1.25)+(nbh-200)*1.5
+
+
+
+	def save(self, *args, **kwargs):
+		if self.employee and self.attendance:
+			# self.monthSalary = self.employee.salary*heureMensuelle
+			self.monthSalary = self.employee.salary*self.attendance.hours
+		super(Payment, self).save(*args, **kwargs)
+
+
+	
 
 
 

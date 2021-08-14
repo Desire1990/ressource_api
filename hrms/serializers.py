@@ -20,8 +20,8 @@ class TokenPairSerializer(TokenObtainPairSerializer):
 
 	def validate(self, attrs):
 		data = super(TokenPairSerializer, self).validate(attrs)
-		data['services'] = [group.name for group in self.user.groups.all()]
 		data['is_admin'] = self.user.is_superuser
+		data['is_active'] = self.user.is_active
 		data['id'] = self.user.id
 		data['fullname'] = self.user.first_name+" "+self.user.last_name
 		data['email'] = self.user.email
@@ -32,7 +32,6 @@ class TokenPairSerializer(TokenObtainPairSerializer):
 class EmployeeSerializer(serializers.ModelSerializer): 
 	class Meta:
 		model = Employee
-		fields = '__all__'
 		fields = ('avatar','is_valid','department','role','mobile','title','status','address','gender','joined','birthday','education','employeetype','salary')
 
 
@@ -86,11 +85,16 @@ class DepartmentSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Department
 		fields = '__all__'
+		depth = 1
 
 class AttendanceSerializer(serializers.ModelSerializer): 
+	start_time = serializers.DateTimeField(initial=datetime.date.today)
+	end_time = serializers.DateTimeField()
 	class Meta:
 		model = Attendance
-		fields = '__all__'
+		fields = ('Approved_by', 'employee', 'start_time', 'end_time', 'hours')
+
+
 
 class LeaveSerializer(serializers.ModelSerializer): 
 	class Meta:
@@ -105,6 +109,7 @@ class RoleSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Role
 		fields = "__all__"
+		depth = 1
 
 class BankSerializer(serializers.ModelSerializer): 
 	class Meta:

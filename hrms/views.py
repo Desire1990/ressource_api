@@ -57,6 +57,7 @@ class AttendanceViewset(viewsets.ModelViewSet):
 	queryset = Attendance.objects.all()
 	serializer_class = AttendanceSerializer
 
+
 class LeaveViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
