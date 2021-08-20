@@ -1,8 +1,7 @@
 from django.db import models
 import random
 from django.utils import timezone
-import datetime
-import time
+from datetime import datetime, time, date
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
 from .manager import LeaveManager
@@ -12,7 +11,7 @@ STATUS = (
 	('ABSENT', 'ABSENT'),
 	('UNAVAILABLE', 'UNAVAILABLE')
 )
-
+ 
 MARRIED = 'Married'
 SINGLE = 'Single'
 DIVORCED = 'Divorced'
@@ -91,11 +90,7 @@ LEAVE_TYPE = (
 	(STUDY,'Study Leave'),
 )
 
-DAYS = 30
-
-
-
-
+DAYS = 30.41
 
 
 class Department(models.Model):
@@ -137,7 +132,6 @@ class Role(models.Model):
 
 	def __str__(self):
 		return self.name
-
 
 
 class Employee(models.Model):
@@ -182,38 +176,20 @@ class Employee(models.Model):
 		elif othername:
 			fullname = firstname + ' '+ lastname +' '+othername
 			return fullname
-		return
 
-  
-   
+
 
 class Attendance (models.Model):
-	employee = models.ForeignKey(Employee, on_delete=models.CASCADE, null=True)
-	start_time = models.DateTimeField(blank=True, null=True)
-	end_time = models.DateTimeField(blank=True, null=True)
-	Approved_by = models.CharField(max_length = 50, help_text = 'Approved by ...')
-	hours = models.FloatField(blank=True, null=True, editable=False)
+	employee = models.OneToOneField(Employee, on_delete=models.CASCADE, null=True)
+	start_at = models.DateTimeField(blank=True, null=True)
+	total_hours = models.BigIntegerField(blank=True, default=0)
 
-	def save(self, *args, **kwargs):
-		if self.start_time and self.end_time:
-			self.hours = (self.end_time - self.start_time).seconds // 3600
-		super(Attendance, self).save(*args, **kwargs)
-
-
-	
 	def __str__(self):
-		return 'Attendance -> '+str(self.hours) +'h'' -> ' + str(self.employee)
+		return 'Attendance -> '+str(self.total_hours/3600) +' h'' -> ' + str(self.employee)
 
-	def calcul_heureMensuelle(self):
-		pass
-
-	# def save(self, *args, **kwargs):
-	# 	start_time = datetime.datetime.now().time().strftime('%H:%M:%S')
-	# 	end_time = datetime.datetime.now().time().strftime('%H:%M:%S')
-	# 	total_time=(datetime.datetime.strptime(end_time,'%H:%M:%S') - datetime.datetime.strptime(start_time,'%H:%M:%S'))
-	# 	hours = total_time
-	# 	super(Attendance, self).save(*args, **kwargs)
-
+class AttendancyHistory(models.Model):
+	attendance = models.ForeignKey(Attendance, on_delete= models.PROTECT)
+	time = models.DateTimeField(default=datetime.now)
 
 class Leave(models.Model):
 	user = models.ForeignKey(User,on_delete=models.CASCADE,default=1)
@@ -227,9 +203,7 @@ class Leave(models.Model):
 	updated = models.DateTimeField(auto_now=True, auto_now_add=False)
 	created = models.DateTimeField(auto_now=False, auto_now_add=True)
 	Approved_by = models.CharField(max_length=50, null=True, blank=False)
-	# objects = LeaveManager()
-
-
+	objects = LeaveManager()
 
 	@property
 	def pretty_leave(self):
@@ -249,16 +223,10 @@ class Leave(models.Model):
 			return 0
 		dates = (enddate - startdate)
 		return dates.days
-		
-
-
 
 	@property
 	def leave_approved(self):
 		return self.is_approved == True
-
-
-
 
 	@property
 	def approve_leave(self):
@@ -281,10 +249,6 @@ class Leave(models.Model):
 			self.is_approved = False
 			self.status = 'cancelled'
 			self.save()
-
-
-
-
 
 
 class Recruitment(models.Model):
@@ -325,11 +289,8 @@ class Payment(models.Model):
 	def __str__(self):
 		return f'{self.date} {self.employee.salary}'
 
-	def heures(self):
-		pass #comment  trouver le nombre d'heures pendant un mois noteees nbh tenu pour calculer les salaires
-
-
 	def heureMensuelle(nbh):
+		nbh:attendance.total_hours = self.total_hours
 		if nbh<160:
 			result = nbh
 		elif  nbh<200:
@@ -342,7 +303,7 @@ class Payment(models.Model):
 	def save(self, *args, **kwargs):
 		if self.employee and self.attendance:
 			# self.monthSalary = self.employee.salary*heureMensuelle
-			self.monthSalary = self.employee.salary*self.attendance.hours
+			self.monthSalary = (self.employee.salary/160)*(self.attendance.total_hours/3600)
 		super(Payment, self).save(*args, **kwargs)
 
 

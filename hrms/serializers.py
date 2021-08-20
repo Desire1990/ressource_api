@@ -5,9 +5,6 @@ from django.contrib.auth.models import User
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
-
-	
-
 class TokenPairSerializer(TokenObtainPairSerializer):
 	
 	@classmethod
@@ -27,14 +24,10 @@ class TokenPairSerializer(TokenObtainPairSerializer):
 		data['email'] = self.user.email
 		return data
 
-
-		
 class EmployeeSerializer(serializers.ModelSerializer): 
 	class Meta:
 		model = Employee
 		fields = ('avatar','is_valid','department','role','mobile','title','status','address','gender','joined','birthday','education','employeetype','salary')
-
-
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
 	employee = EmployeeSerializer(required=True)
@@ -78,9 +71,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 		return instance
 
-
-
-
 class DepartmentSerializer(serializers.ModelSerializer): 
 	class Meta:
 		model = Department
@@ -88,11 +78,15 @@ class DepartmentSerializer(serializers.ModelSerializer):
 		depth = 1
 
 class AttendanceSerializer(serializers.ModelSerializer): 
-	start_time = serializers.DateTimeField(initial=datetime.date.today)
-	end_time = serializers.DateTimeField()
+	start_at = serializers.DateTimeField(initial=date.today)
 	class Meta:
 		model = Attendance
-		fields = ('Approved_by', 'employee', 'start_time', 'end_time', 'hours')
+		fields = ('employee', 'start_at', 'total_hours')
+
+class AttendancyHistoryserializer(serializers.ModelSerializer): 
+	class Meta:
+		model = AttendancyHistory
+		fields = "__all__"
 
 
 
