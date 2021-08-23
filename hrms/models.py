@@ -11,7 +11,7 @@ STATUS = (
 	('ABSENT', 'ABSENT'),
 	('UNAVAILABLE', 'UNAVAILABLE')
 )
- 
+
 MARRIED = 'Married'
 SINGLE = 'Single'
 DIVORCED = 'Divorced'
@@ -107,7 +107,7 @@ class Department(models.Model):
 		verbose_name = _('Department')
 		verbose_name_plural = _('Departments')
 		ordering = ['name','created']
-	
+
 	def __str__(self):
 		return self.name
 
@@ -157,11 +157,11 @@ class Employee(models.Model):
 	joined = models.DateTimeField(default=timezone.now, editable=False)
 	birthday = models.DateField(_('Birthday'),blank=False,null=False)
 	education = models.CharField(_('Education'),help_text='highest educational standard ie. your last level of schooling',max_length=20,default=SENIORHIGH,choices=EDUCATIONAL_LEVEL,blank=False,null=True)
-	employeetype = models.CharField(_('Employee Type'),max_length=15,default=FULL_TIME,choices=EMPLOYEETYPE,blank=False,null=True)	
+	employeetype = models.CharField(_('Employee Type'),max_length=15,default=FULL_TIME,choices=EMPLOYEETYPE,blank=False,null=True)
 	salary = models.FloatField()
 
 	def __str__(self):
-		return f'{self.user}' 
+		return f'{self.user}'
 
 	@property
 	def get_full_name(self):
@@ -190,6 +190,12 @@ class Attendance (models.Model):
 class AttendancyHistory(models.Model):
 	attendance = models.ForeignKey(Attendance, on_delete= models.PROTECT)
 	time = models.DateTimeField(default=datetime.now)
+
+	class Meta:
+		ordering = 'id',
+
+	def __str__(self):
+		return 'Attendance number: '+ str(self.id)
 
 class Leave(models.Model):
 	user = models.ForeignKey(User,on_delete=models.CASCADE,default=1)
@@ -265,7 +271,7 @@ class Recruitment(models.Model):
 class Bank(models.Model):
 	name = models.CharField(_('Name of Bank'),max_length=125,blank=False,null=True,help_text='')
 	account = models.CharField(_('Account Number'),help_text='employee account number',max_length=30,blank=False,null=True)
-	
+
 
 	class Meta:
 		verbose_name = _('Bank')
@@ -285,9 +291,9 @@ class Payment(models.Model):
 	date = models.DateTimeField(default=timezone.now, editable=False)
 	monthSalary = models.FloatField(editable=False)
 
-	
+
 	def __str__(self):
-		return f'{self.date} {self.employee.salary}'
+		return f'{self.date} {self.monthSalary}'
 
 	def heureMensuelle(nbh):
 		nbh:attendance.total_hours = self.total_hours
@@ -307,8 +313,8 @@ class Payment(models.Model):
 		super(Payment, self).save(*args, **kwargs)
 
 
-	
 
 
 
-# gestions des biens et quotation ensembles 
+
+# gestions des biens et quotation ensembles

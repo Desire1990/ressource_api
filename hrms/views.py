@@ -14,7 +14,15 @@ from .models import *
 from .serializers import *
 from .permissions import IsLoggedInUserOrAdmin, IsAdminUser
 
-import traceback, sys, json, base64
+
+def heureMensuelle(nbh):
+	nbh:attendance.total_hours = self.total_hours
+	if nbh<160:
+		result = nbh
+	elif  nbh<200:
+		result = 160 + (nbh-160)*1.25
+	else:
+		result = 160+(40*1.25)+(nbh-200)*1.5
 
 class TokenPairView(TokenObtainPairView):
 	serializer_class = TokenPairSerializer
@@ -53,13 +61,13 @@ class AttendanceViewset(mixins.ListModelMixin,
 						mixins.RetrieveModelMixin,
 						mixins.DestroyModelMixin,
 						viewsets.GenericViewSet):
-	authentication_classes = [SessionAuthentication, JWTAuthentication]  
+	authentication_classes = [SessionAuthentication, JWTAuthentication]
 	permission_classes = [IsAuthenticated]
 	queryset = Attendance.objects.all()
 	serializer_class = AttendanceSerializer
 
-	@transaction.atomic
-	@action(methods=['GET'], detail=False, url_name=r'attendence', url_path="attendence",  permission_classes=[IsAuthenticated])
+	@transaction.atomic()
+	@action(methods=['GET'], detail=False, url_name=r'attendance', url_path="attendance",  permission_classes=[IsAuthenticated])
 	def attendance(self, request):
 		employee:Employee = request.user.employee
 		attendances = Attendance.objects.filter(employee = employee)
@@ -71,7 +79,7 @@ class AttendanceViewset(mixins.ListModelMixin,
 			)
 			attendance.save()
 			AttendancyHistory(attendance=attendance).save()
-			return Response({'status': 'success'}, 201)
+			return Response({'status': 'Attendance started'}, 201)
 
 		attendance = attendances.first()
 		AttendancyHistory(attendance=attendance).save()
@@ -85,7 +93,7 @@ class AttendanceViewset(mixins.ListModelMixin,
 			attendance.total_hours = (attendance.total_hours or 0) + worked_time.total_seconds()
 			attendance.start_at = None
 			attendance.save()
-			return Response({'status': 'success'}, 201) 
+			return Response({'status': 'Attendance closed'}, 201)
 
 
 class LeaveViewset(viewsets.ModelViewSet):
@@ -107,6 +115,29 @@ class PaymentViewset(viewsets.ModelViewSet):
 	queryset = Payment.objects.all()
 	serializer_class = PaymentSerializer
 	# filter_backends = (filters.DjangoFilterBackend,)
+
+	@transaction.atomic()
+	@action(methods=['GET'], detail=False, url_name=r'pay', url_path="pay",  permission_classes=[IsAuthenticated])
+	def pay(self, request):
+		employee:Employee = request.user.employee
+		payment = Payment.objects.filter(employee = employee)
+		if(not payment):
+			pay:Payment = Payment(
+				employee = employee,
+				attendance = attendance,
+				bank = bank,
+				date = datetime.now(),
+				monthSalary = monthSalary
+			)
+			pay.save()
+			return Response({'status': 'success'}, 201)
+		else:
+			pay.total_hours = heureMensuelle(total_hours)
+			pay.monthSalary = total_hours*s
+			pay.save()
+			return Response({'status': 'success'}, 201)
+
+
 
 
 class RoleViewset(viewsets.ModelViewSet):
